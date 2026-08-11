@@ -1,0 +1,8 @@
+{
+  "version": "0",
+  "id": "fe1c234b-5678-90ab-cdef-1234567890ab",
+  "detail-type": "Scheduled Event",
+  "source": "aws.events",
+  "time": "2026-08-10T15:48:40Z",
+  "region": "ap-south-2"
+}

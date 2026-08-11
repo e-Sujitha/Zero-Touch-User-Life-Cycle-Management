@@ -1,0 +1,12 @@
+{
+  "token": "gI3b2kfN2xEXAMPLE",
+  "team_id": "T0001",
+  "team_domain": "example",
+  "channel_id": "C2147483705",
+  "channel_name": "test",
+  "user_id": "U2147483697",
+  "user_name": "sujithagrp",
+  "command": "/onboard",
+  "text": "john john@gmail.com",
+  "response_url": "https://hooks.slack.com/commands/1234/5678"
+}

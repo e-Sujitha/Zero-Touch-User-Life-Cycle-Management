@@ -1,0 +1,56 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "IAMLifecycleManagement",
+      "Effect": "Allow",
+      "Action": [
+        "iam:GetUser",
+        "iam:CreateUser",
+        "iam:DeleteUser",
+        "iam:CreateLoginProfile",
+        "iam:DeleteLoginProfile",
+        "iam:CreateAccessKey",
+        "iam:ListAccessKeys",
+        "iam:DeleteAccessKey",
+        "iam:AttachUserPolicy",
+        "iam:DetachUserPolicy",
+        "iam:ListAttachedUserPolicies",
+        "iam:ListUserPolicies",
+        "iam:DeleteUserPolicy",
+        "iam:ListGroupsForUser",
+        "iam:RemoveUserFromGroup"
+      ],
+      "Resource": "arn:aws:iam::*:user/*"
+    },
+    {
+      "Sid": "DynamoDBAuditTableAccess",
+      "Effect": "Allow",
+      "Action": [
+        "dynamodb:PutItem",
+        "dynamodb:GetItem",
+        "dynamodb:UpdateItem",
+        "dynamodb:Scan"
+      ],
+      "Resource": "arn:aws:dynamodb:*:*:table/OnboardingAudit"
+    },
+    {
+      "Sid": "SESEmailNotifications",
+      "Effect": "Allow",
+      "Action": [
+        "ses:SendEmail"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "CloudWatchLogs",
+      "Effect": "Allow",
+      "Action": [
+        "logs:CreateLogGroup",
+        "logs:CreateLogStream",
+        "logs:PutLogEvents"
+      ],
+      "Resource": "*"
+    }
+  ]
+}
