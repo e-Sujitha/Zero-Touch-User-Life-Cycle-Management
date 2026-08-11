@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AWS IAM User Lifecycle Audit Dashboard</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background-color: #f8f9fa; padding-top: 30px; }
+        .card { border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .badge-active { background-color: #198754; }
+        .badge-tombstone { background-color: #ffc107; color: #000; }
+        .badge-offboarded { background-color: #fd7e14; }
+        .badge-deleted { background-color: #dc3545; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>🛡️ IAM User Lifecycle Audit Dashboard</h2>
+        <button class="btn btn-primary" onclick="fetchAuditLogs()">🔄 Refresh Data</button>
+    </div>
+
+    <div class="card p-4 mb-4">
+        <div class="row g-3">
+            <div class="col-md-8">
+                <input type="text" id="searchInput" class="form-control" placeholder="Search by Username, Email, or Actor..." onkeyup="filterData()">
+            </div>
+            <div class="col-md-4">
+                <select id="statusFilter" class="form-select" onchange="filterData()">
+                    <option value="">All Statuses</option>
+                    <option value="ACTIVE">ACTIVE</option>
+                    <option value="TOMBSTONE">TOMBSTONE</option>
+                    <option value="OFFBOARDED">OFFBOARDED</option>
+                    <option value="DELETED_PERMANENTLY">DELETED_PERMANENTLY</option>
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <div class="card p-3">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-dark">
+                    <tr>
+                        <th>User ID</th>
+                        <th>Status</th>
+                        <th>Created By / Email</th>
+                        <th>Timestamps</th>
+                        <th>Scheduled Deletion</th>
+                    </tr>
+                </thead>
+                <tbody id="auditTableBody">
+                    <tr><td colspan="5" class="text-center text-muted">Loading audit records...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+    // API Gateway endpoint URL
+    const API_URL = "https://bovnithi1l.execute-api.ap-south-2.amazonaws.com/Prod/audit";
+    let auditData = [];
+
+    async function fetchAuditLogs() {
+    const tableBody = document.getElementById("auditTableBody");
+    tableBody.innerHTML = '<tr><td colspan="5" class="text-center text-muted">Loading audit records...</td></tr>';
+    
+    try {
+        const response = await fetch(API_URL);
+        const result = await response.json();
+        
+        // Handle direct array or status key response
+        const data = result.data || (Array.isArray(result) ? result : null);
+
+        if (data) {
+            auditData = data;
+            renderTable(auditData);
+        } else {
+            const errorMsg = result.message || result.errorMessage || "Unknown response structure";
+            tableBody.innerHTML = `<tr><td colspan="5" class="text-center text-danger">Error: ${errorMsg}</td></tr>`;
+        }
+    } catch (error) {
+        tableBody.innerHTML = `<tr><td colspan="5" class="text-center text-danger">Failed to connect to API Gateway. Check CORS settings.</td></tr>`;
+    }
+}
+
+    function getBadgeClass(status) {
+        switch (status) {
+            case 'ACTIVE': return 'badge-active';
+            case 'TOMBSTONE': return 'badge-tombstone';
+            case 'OFFBOARDED': return 'badge-offboarded';
+            case 'DELETED_PERMANENTLY': return 'badge-deleted';
+            default: return 'bg-secondary';
+        }
+    }
+
+    function renderTable(data) {
+        const tableBody = document.getElementById("auditTableBody");
+        if (data.length === 0) {
+            tableBody.innerHTML = '<tr><td colspan="5" class="text-center text-muted">No records found.</td></tr>';
+            return;
+        }
+
+        tableBody.innerHTML = data.map(item => `
+            <tr>
+                <td><strong>${item.UserID || '-'}</strong></td>
+                <td><span class="badge ${getBadgeClass(item.Status)}">${item.Status || 'UNKNOWN'}</span></td>
+                <td>
+                    <small>
+                        <b>Email:</b> ${item.TargetEmail || 'N/A'}<br>
+                        <b>By:</b> ${item.CreatedBy || item.OffboardedBy || 'N/A'}
+                    </small>
+                </td>
+                <td>
+                    <small>
+                        <b>Created:</b> ${item.Timestamp || 'N/A'}<br>
+                        ${item.OffboardedAt ? `<b>Offboarded:</b> ${item.OffboardedAt}` : ''}
+                    </small>
+                </td>
+                <td><small>${item.DeletionScheduledAt || '-'}</small></td>
+            </tr>
+        `).join('');
+    }
+
+    function filterData() {
+        const searchTerm = document.getElementById("searchInput").value.toLowerCase();
+        const selectedStatus = document.getElementById("statusFilter").value;
+
+        const filtered = auditData.filter(item => {
+            const matchesSearch = 
+                (item.UserID && item.UserID.toLowerCase().includes(searchTerm)) ||
+                (item.TargetEmail && item.TargetEmail.toLowerCase().includes(searchTerm)) ||
+                (item.CreatedBy && item.CreatedBy.toLowerCase().includes(searchTerm));
+            
+            const matchesStatus = selectedStatus === "" || item.Status === selectedStatus;
+
+            return matchesSearch && matchesStatus;
+        });
+
+        renderTable(filtered);
+    }
+
+    // Initial load
+    fetchAuditLogs();
+</script>
+</body>
+</html>
